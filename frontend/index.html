@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jimy FerroStore &mdash; Gestión de Inventario y Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ---------- Pantalla de inicio de sesión ---------- -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="brand auth-brand">
+      <span class="brand-mark"><img src="img/logo.png" alt="Jimy FerroStore" width="100" height="100" /></span>
+      <div>
+        <div class="brand-name">Jimy FerroStore</div>
+        <div class="brand-sub">panel de operaciones</div>
+      </div>
+    </div>
+    <h1 class="auth-title">Iniciar sesión</h1>
+    <p class="auth-hint">Ingresá con tu usuario para acceder al panel.</p>
+    <form id="form-login">
+      <div class="form-field">
+        <label>Usuario</label>
+        <input name="username" id="login-username" autocomplete="username" required autofocus />
+      </div>
+      <div class="form-field">
+        <label>Contraseña</label>
+        <input name="password" id="login-password" type="password" autocomplete="current-password" required />
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button type="submit" class="btn primary auth-submit" id="login-submit">Ingresar</button>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark"><img src="img/logo.png" alt="Jimy FerroStore" width="100" height="100" /></span>
+      <div>
+        <div class="brand-name">Jimy FerroStore</div>
+        <div class="brand-sub">panel de operaciones</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-idx">01</span> Panel general
+      </button>
+      <button class="nav-item" data-view="productos">
+        <span class="nav-idx">02</span> Productos
+      </button>
+      <button class="nav-item" data-view="clientes">
+        <span class="nav-idx">03</span> Clientes
+      </button>
+      <button class="nav-item" data-view="pedidos">
+        <span class="nav-idx">04</span> Pedidos
+      </button>
+      <button class="nav-item" data-view="informes">
+        <span class="nav-idx">05</span> Informes
+      </button>
+    </nav>
+
+    <div class="sidebar-user" id="sidebar-user">
+      <button class="user-btn" id="user-menu-btn" type="button">
+        <span class="user-avatar" id="user-avatar">?</span>
+        <span class="user-info">
+          <span class="user-name" id="user-name-label">&hellip;</span>
+          <span class="user-role" id="user-role-label"></span>
+        </span>
+      </button>
+      <div class="user-menu" id="user-menu">
+        <button type="button" id="btn-abrir-perfil">Mi perfil</button>
+        <button type="button" id="btn-cerrar-sesion" class="danger-item">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span id="conn-dot" class="conn-dot"></span>
+      <span id="conn-label">verificando API&hellip;</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1 id="view-title">Panel general</h1>
+      <div class="topbar-right">
+        <div class="topbar-actions" id="topbar-actions"></div>
+        <button id="theme-toggle" class="btn theme-toggle" type="button" title="Cambiar tema" aria-label="Cambiar entre modo claro y oscuro">
+          <span id="theme-toggle-icon">☀️</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="toast" class="toast"></div>
+
+    <section id="view-dashboard" class="view active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-label">Pedidos totales</span>
+          <span class="stat-value mono" id="stat-pedidos">&mdash;</span>
+        </div>
+        <div class="stat-card accent">
+          <span class="stat-label">Ingresos totales</span>
+          <span class="stat-value mono" id="stat-ingresos">&mdash;</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Pendientes</span>
+          <span class="stat-value mono" id="stat-pendientes">&mdash;</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Entregados</span>
+          <span class="stat-value mono" id="stat-entregados">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="panel-row">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Stock por producto</h2>
+            <span class="panel-hint">nivel actual / capacidad de referencia</span>
+          </div>
+          <div id="stock-pulse-list" class="pulse-list"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Pedidos recientes</h2>
+          </div>
+          <div id="pedidos-recientes" class="mini-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-productos" class="view">
+      <div class="toolbar">
+        <input type="text" id="buscar-producto" placeholder="Buscar producto por nombre&hellip;" />
+        <select id="filtro-categoria">
+          <option value="">Todas las categorías</option>
+          <option value="Herramientas Manuales">Herramientas Manuales</option>
+          <option value="Herramientas Electricas">Herramientas Eléctricas</option>
+          <option value="Materiales de Construccion">Materiales de Construcción</option>
+          <option value="Electricidad">Electricidad</option>
+          <option value="Plomeria">Plomería</option>
+          <option value="Pintura">Pintura</option>
+          <option value="Seguridad e Higiene">Seguridad e Higiene</option>
+          <option value="Tornillos y Fijaciones">Tornillos y Fijaciones</option>
+          <option value="Otros">Otros</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla-productos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-clientes" class="view">
+      <div class="toolbar">
+        <input type="text" id="buscar-cliente" placeholder="Buscar cliente por nombre&hellip;" />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Correo</th><th>Teléfono</th><th>Dirección</th><th></th></tr>
+          </thead>
+          <tbody id="tabla-clientes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-pedidos" class="view">
+      <div class="toolbar">
+        <select id="filtro-estado">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="enviado">Enviado</option>
+          <option value="entregado">Entregado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>N.° Factura</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Fecha</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="tabla-pedidos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="view-informes" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Evolución de ventas</h2>
+          <span class="panel-hint">ingresos totales por mes</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="chart-ventas-mes"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Ventas por producto</h2></div>
+        <div id="informe-producto" class="bar-list"></div>
+      </div>
+      <div class="panel-row">
+        <div class="panel">
+          <div class="panel-head"><h2>Ventas por categoría</h2></div>
+          <div id="informe-categoria" class="bar-list"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Ventas por mes (detalle)</h2></div>
+          <div id="informe-mes" class="bar-list"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
